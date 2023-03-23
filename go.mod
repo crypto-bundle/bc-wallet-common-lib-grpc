@@ -1,4 +1,4 @@
-module github.com/crypto-bundle/bc-wallet-common
+module github.com/crypto-bundle/bc-wallet-common-lib-grpc
 
 go 1.17
 
