@@ -30,7 +30,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/crypto-bundle/bc-wallet-common/pkg/dns"
+	"github.com/crypto-bundle/bc-wallet-common-lib-grpc/pkg/dns"
 
 	grpcRetry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	originGRPC "google.golang.org/grpc"
