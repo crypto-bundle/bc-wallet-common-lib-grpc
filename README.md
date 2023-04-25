@@ -19,9 +19,9 @@ Examples of create connection and write database communication code
 package main
 
 import (
-	pbApi "github.com/crypto-bundle/bc-wallet-common-lib-grpc/pkg/grpc/grpc_handlers/proto"
+	pbApi "gitlab.heronodes.io/bc-platform/bc-wallet-common-lib-grpc/pkg/grpc/grpc_handlers/proto"
 
-	commonGRPCServer "github.com/crypto-bundle/bc-wallet-common-lib-grpc/pkg/server"
+	commonGRPCServer "gitlab.heronodes.io/bc-platform/bc-wallet-common-lib-grpc/pkg/server"
 
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/opentracing/opentracing-go"
@@ -84,4 +84,6 @@ func main() {
 
 ## Licence
 
-bc-wallet-common-lib-grpc is licensed under the [MIT](./LICENSE) License.
+**bc-wallet-common-lib-grpc** has a proprietary license.
+
+Switched to proprietary license from MIT - [CHANGELOG.MD - v0.0.3](./CHANGELOG.md)
