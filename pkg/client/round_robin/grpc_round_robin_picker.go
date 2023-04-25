@@ -28,7 +28,7 @@ import (
 	"crypto/rand"
 	"log"
 	"math/big"
-	"sync"
+	"sync/atomic"
 
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
@@ -69,12 +69,13 @@ func (*rrPickerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
 	}
 
 	return &rrPicker{
-		subConns:     scs,
-		subConnsInfo: scsInfo,
+		subConns:       scs,
+		subConnsInfo:   scsInfo,
+		subsConnsCount: uint64(len(scs)),
 		// Start at a random index, as the same RR balancer rebuilds a new
 		// picker when SubConn states change, and we don't want to apply excess
 		// load to the first server in the list.
-		next: int(next.Int64()),
+		next: next.Uint64(),
 	}
 }
 
@@ -82,21 +83,19 @@ type rrPicker struct {
 	// subConns is the snapshot of the roundrobin balancer when this picker was
 	// created. The slice is immutable. Each Get() will do a round robin
 	// selection from it and return the selected SubConn.
-	subConns     []balancer.SubConn
-	subConnsInfo []base.SubConnInfo
+	subConns       []balancer.SubConn
+	subConnsInfo   []base.SubConnInfo
+	subsConnsCount uint64
 
-	mu   sync.Mutex
-	next int
+	next uint64
 
 	logger *log.Logger
 }
 
 func (p *rrPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
-	p.mu.Lock()
-	sc := p.subConns[p.next]
-	//scInfo := p.subConnsInfo[p.next]
-	p.next = (p.next + 1) % len(p.subConns)
-	p.mu.Unlock()
+	next := atomic.AddUint64(&p.next, 1)
 
-	return balancer.PickResult{SubConn: sc}, nil
+	return balancer.PickResult{
+		SubConn: p.subConns[next%p.subsConnsCount],
+	}, nil
 }
