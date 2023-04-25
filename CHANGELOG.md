@@ -5,7 +5,7 @@
 ### Changed
 
 #### Switching to a proprietary license.
-License of **bc-wallet-common-lib-grpc** repository changed to proprietary.
+License of **bc-wallet-common-lib-grpc** repository changed to proprietary - commit revision number **8491a3eb67de33f40274e0f502ec2f29a95a3b09**.
 
 The MIT license is replaced by me (_Kotelnikov Aleksei_) as an author and maintainer.
 

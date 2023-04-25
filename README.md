@@ -86,4 +86,4 @@ func main() {
 
 **bc-wallet-common-lib-grpc** has a proprietary license.
 
-Switched to proprietary license from MIT - [CHANGELOG.MD - v0.0.3](./CHANGELOG.md)
+Switched to proprietary license from MIT - [CHANGELOG.MD - v0.0.5](./CHANGELOG.md)
