@@ -1,19 +1,13 @@
 # Change Log
 
-## [v0.0.5] - 25.04.2023 14:07 MSK
-
+## [v0.0.1] - 24.03.2023 00:10 MSK
 ### Changed
+* Lib-grpc moved to another repository - https://github.com/crypto-bundle/bc-wallet-common-lib-grpc
+    * Removed other packages of old bc-wallet-common repository
+* Added MIT license
+### Fixed
+* Fixed wrong path of dependencies - gRPC dns package 
 
-#### Switching to a proprietary license.
-License of **bc-wallet-common-lib-grpc** repository changed to proprietary - commit revision number **8491a3eb67de33f40274e0f502ec2f29a95a3b09**.
-
-The MIT license is replaced by me (_Kotelnikov Aleksei_) as an author and maintainer.
-
-The license has been replaced with a proprietary one, with the condition of maintaining the authorship
-and specifying in the README.md file in the section of authors and contributors.
-
-[@gudron (Kotelnikov Aleksei)](https://github.com/gudron) - author and maintainer of [crypto-bundle project](https://github.com/crypto-bundle)
-
-The commit is signed with the key -
-gudron2s@gmail.com
-E456BB23A18A9347E952DBC6655133DD561BF3EC
+## [v0.0.2] - 25.04.2023 14:00 MSK
+### Added
+* Added gRPC-client roundrobin picker for client-side balancing cryptobundle profile

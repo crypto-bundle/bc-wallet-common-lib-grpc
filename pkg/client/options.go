@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"gitlab.heronodes.io/bc-platform/bc-wallet-common-lib-grpc/pkg/dns"
+	"github.com/crypto-bundle/bc-wallet-common-lib-grpc/pkg/dns"
 
 	grpcRetry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	originGRPC "google.golang.org/grpc"
