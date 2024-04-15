@@ -4,29 +4,24 @@ import (
 	"context"
 	"time"
 
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
-	"github.com/opentracing/opentracing-go"
-	"google.golang.org/grpc"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	originGRPC "google.golang.org/grpc"
 )
 
 const connectTimeout = 10 * time.Second
 
 type LazyConnection struct {
-	connection *grpc.ClientConn
+	connection *originGRPC.ClientConn
 
 	address string
-	options []grpc.DialOption
+	options []originGRPC.DialOption
 }
 
-func NewLazyConnection(address string, additionalOptions ...grpc.DialOption) *LazyConnection {
+func NewLazyConnection(address string, additionalOptions ...originGRPC.DialOption) *LazyConnection {
 	options := DefaultDialOptions()
 	options = append(
 		options,
-		grpc.WithUnaryInterceptor(
-			otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer()),
-		),
-		grpc.WithUnaryInterceptor(grpc_prometheus.UnaryClientInterceptor),
+		originGRPC.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 	options = append(options, additionalOptions...)
 
@@ -40,7 +35,7 @@ func (d *LazyConnection) connect(ctx context.Context) error {
 	ctx, finish := context.WithTimeout(ctx, connectTimeout)
 	defer finish()
 
-	conn, err := grpc.DialContext(ctx, d.address, d.options...)
+	conn, err := originGRPC.DialContext(ctx, d.address, d.options...)
 	if err != nil {
 		return err
 	}
@@ -49,7 +44,7 @@ func (d *LazyConnection) connect(ctx context.Context) error {
 }
 
 func (d *LazyConnection) Invoke(ctx context.Context, method string, args, reply interface{},
-	opts ...grpc.CallOption) error {
+	opts ...originGRPC.CallOption) error {
 	if d.connection == nil {
 		err := d.connect(ctx)
 		if err != nil {
@@ -59,8 +54,8 @@ func (d *LazyConnection) Invoke(ctx context.Context, method string, args, reply 
 	return d.connection.Invoke(ctx, method, args, reply, opts...)
 }
 
-func (d *LazyConnection) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string,
-	opts ...grpc.CallOption) (grpc.ClientStream, error) {
+func (d *LazyConnection) NewStream(ctx context.Context, desc *originGRPC.StreamDesc, method string,
+	opts ...originGRPC.CallOption) (originGRPC.ClientStream, error) {
 	if d.connection == nil {
 		err := d.connect(ctx)
 		if err != nil {

@@ -11,3 +11,7 @@
 ## [v0.0.2] - 25.04.2023 14:00 MSK
 ### Added
 * Added gRPC-client roundrobin picker for client-side balancing cryptobundle profile
+
+## [v0.0.3] - 15.04.2024
+### Changed
+* Removed usage of opentracing. Moved to (go.opentelemetry.io)[https://github.com/open-telemetry/opentelemetry-go-contrib]
