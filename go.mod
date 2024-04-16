@@ -1,6 +1,6 @@
 module github.com/crypto-bundle/bc-wallet-common-lib-grpc
 
-go 1.19
+go 1.22
 
 require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0

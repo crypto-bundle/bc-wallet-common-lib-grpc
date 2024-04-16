@@ -15,3 +15,7 @@
 ## [v0.0.3] - 15.04.2024
 ### Changed
 * Removed usage of opentracing. Moved to (go.opentelemetry.io)[https://github.com/open-telemetry/opentelemetry-go-contrib]
+
+## [v0.0.4] - 16.04.2024
+### Changed
+* Bump golang version 1.19 -> 1.22
