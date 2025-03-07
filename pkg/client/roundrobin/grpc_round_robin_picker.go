@@ -30,77 +30,80 @@
  *
  */
 
-package client
+package roundrobin
 
 import (
-	"context"
-	"math"
-	"net"
-	"time"
+	"crypto/rand"
+	"math/big"
+	"sync/atomic"
 
-	"github.com/crypto-bundle/bc-wallet-common-lib-grpc/pkg/dns"
-
-	grpcRetry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
-	originGRPC "google.golang.org/grpc"
-	grpcCodes "google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
-	grpcKeepalive "google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/balancer"
+	"google.golang.org/grpc/balancer/base"
 )
 
-const (
-	DefaultClientMaxReceiveMessageSize = 1024 * 1024 * 24
-	DefaultClientMaxSendMessageSize    = math.MaxInt32
-)
+// Name is the name of round_robin balancer.
+const Name = "round_robin_crypto_bundle"
 
-func DefaultKeepaliveClientOptions() grpcKeepalive.ClientParameters {
-	return grpcKeepalive.ClientParameters{
-		Time:                10 * time.Second,
-		Timeout:             time.Second,
-		PermitWithoutStream: true,
-	}
+// newBuilder creates a new roundrobin balancer builder.
+//
+//nolint:ireturn // it's ok here, like in vanilla gRPC-picker implementation
+func newBuilder() balancer.Builder {
+	return base.NewBalancerBuilder(Name, &rrPickerBuilder{}, base.Config{HealthCheck: true})
 }
 
-func DefaultRetryOptions() []grpcRetry.CallOption {
-	return []grpcRetry.CallOption{
-		grpcRetry.WithMax(3),
-		grpcRetry.WithBackoff(grpcRetry.BackoffLinear(1000 * time.Millisecond)),
-		grpcRetry.WithCodes(grpcCodes.Aborted, grpcCodes.Unavailable),
-	}
+//nolint:gochecknoinits // ok. It is just copy of origin func
+func init() {
+	balancer.Register(newBuilder())
 }
 
-func DefaultInterceptorsOptions() []originGRPC.UnaryClientInterceptor {
-	return []originGRPC.UnaryClientInterceptor{
-		grpcRetry.UnaryClientInterceptor(DefaultRetryOptions()...),
-	}
+type rrPickerBuilder struct {
 }
 
-func DefaultDialOptions() []originGRPC.DialOption {
-	return []originGRPC.DialOption{
-		originGRPC.WithTransportCredentials(insecure.NewCredentials()),
-		// grpc.WithContextDialer(Dialer), // use it if u need load balancing via dns
-		originGRPC.WithBlock(),
-		originGRPC.WithKeepaliveParams(DefaultKeepaliveClientOptions()),
-		originGRPC.WithChainUnaryInterceptor(DefaultInterceptorsOptions()...),
+//nolint:ireturn // it's ok here, like in vanilla gRPC-picker implementation
+func (*rrPickerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
+	if len(info.ReadySCs) == 0 {
+		return base.NewErrPicker(balancer.ErrNoSubConnAvailable)
 	}
-}
 
-// Dialer is a method to pass it in grpc.Dial options...
-func Dialer(_ context.Context, target string) (net.Conn, error) {
-	addr, err := dns.Resolve("grpc", "tcp", target)
+	scs := make([]balancer.SubConn, 0, len(info.ReadySCs))
+	scsInfo := make([]base.SubConnInfo, 0, len(info.ReadySCs))
+
+	for sc := range info.ReadySCs {
+		scs = append(scs, sc)
+		scsInfo = append(scsInfo, info.ReadySCs[sc])
+	}
+
+	randBigInt := big.NewInt(int64(len(scs)))
+
+	next, err := rand.Int(rand.Reader, randBigInt)
 	if err != nil {
-		return nil, err
+		next = big.NewInt(0)
 	}
 
-	cn, err := net.Dial("tcp", addr)
-
-	return cn, err
+	return &rrPicker{
+		subConns:       scs,
+		subConnsInfo:   scsInfo,
+		subsConnsCount: uint64(len(scs)),
+		// Start at a random index, as the same RR balancer rebuilds a new
+		// picker when SubConn states change, and we don't want to apply excess
+		// load to the first server in the list.
+		next: next.Uint64(),
+	}
 }
 
-func Dial(target string, opts []originGRPC.DialOption) (*originGRPC.ClientConn, error) {
-	dialOptions := opts
-	if len(dialOptions) == 0 {
-		dialOptions = DefaultDialOptions()
-	}
+type rrPicker struct {
+	subConns       []balancer.SubConn
+	subConnsInfo   []base.SubConnInfo
+	subsConnsCount uint64
+	next           uint64
+}
 
-	return originGRPC.Dial(target, dialOptions...)
+func (p *rrPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
+	next := atomic.AddUint64(&p.next, 1)
+
+	return balancer.PickResult{
+		SubConn:  p.subConns[next%p.subsConnsCount],
+		Done:     nil,
+		Metadata: nil,
+	}, nil
 }
