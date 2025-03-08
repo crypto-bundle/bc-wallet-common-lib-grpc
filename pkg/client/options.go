@@ -46,20 +46,26 @@ import (
 const (
 	DefaultClientMaxReceiveMessageSize = 1024 * 1024 * 24
 	DefaultClientMaxSendMessageSize    = math.MaxInt32
+
+	DefaultClientKeepAliveTime    = 2 * time.Minute
+	DefaultClientKeepAliveTimeout = 1*time.Minute + 9*time.Second
+
+	DefaultClientConnectionMaxRetry = 3
+	DefaultClientConnectionBackOff  = 450 * time.Millisecond
 )
 
 func DefaultKeepaliveClientOptions() grpcKeepalive.ClientParameters {
 	return grpcKeepalive.ClientParameters{
-		Time:                10 * time.Second,
-		Timeout:             time.Second,
+		Time:                DefaultClientKeepAliveTime,
+		Timeout:             DefaultClientKeepAliveTimeout,
 		PermitWithoutStream: true,
 	}
 }
 
 func DefaultRetryOptions() []grpcRetry.CallOption {
 	return []grpcRetry.CallOption{
-		grpcRetry.WithMax(3),
-		grpcRetry.WithBackoff(grpcRetry.BackoffLinear(1000 * time.Millisecond)),
+		grpcRetry.WithMax(DefaultClientConnectionMaxRetry),
+		grpcRetry.WithBackoff(grpcRetry.BackoffLinear(DefaultClientConnectionBackOff)),
 		grpcRetry.WithCodes(grpcCodes.Aborted, grpcCodes.Unavailable),
 	}
 }

@@ -110,6 +110,7 @@ func (d *LazyConnection) Invoke(ctx context.Context,
 	return nil
 }
 
+//nolint:ireturn // it's ok. same with vanilla gRPC NewStream implementation
 func (d *LazyConnection) NewStream(ctx context.Context,
 	desc *originGRPC.StreamDesc,
 	method string,

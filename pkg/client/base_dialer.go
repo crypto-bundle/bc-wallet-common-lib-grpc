@@ -93,6 +93,20 @@ func (d *dialer) Dialer(_ context.Context,
 	return cn, nil
 }
 
+func (d *dialer) Dial(target string, opts []originGRPC.DialOption) (*originGRPC.ClientConn, error) {
+	dialOptions := opts
+	if len(dialOptions) == 0 {
+		dialOptions = DefaultDialOptions()
+	}
+
+	conn, err := originGRPC.Dial(target, dialOptions...)
+	if err != nil {
+		return nil, d.e.ErrorOnly(err)
+	}
+
+	return conn, nil
+}
+
 func NewDialer(errFmtSvc errorFormatterService,
 	dnsResolverSvc dnsResolverService,
 ) *dialer {
@@ -100,13 +114,4 @@ func NewDialer(errFmtSvc errorFormatterService,
 		e:           errFmtSvc,
 		resolverSvc: dnsResolverSvc,
 	}
-}
-
-func Dial(target string, opts []originGRPC.DialOption) (*originGRPC.ClientConn, error) {
-	dialOptions := opts
-	if len(dialOptions) == 0 {
-		dialOptions = DefaultDialOptions()
-	}
-
-	return originGRPC.Dial(target, dialOptions...)
 }

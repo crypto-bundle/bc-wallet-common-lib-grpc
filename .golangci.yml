@@ -124,7 +124,8 @@ linters-settings:
         allow:
           - $gostd
           - github.com/crypto-bundle/
-          - github.com/hashicorp/
+          - github.com/grpc-ecosystem/go-grpc-middleware
+          - google.golang.org/grpc
 
   varnamelen:
     ignore-type-assert-ok: true

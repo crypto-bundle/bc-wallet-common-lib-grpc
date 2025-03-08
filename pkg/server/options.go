@@ -41,24 +41,30 @@ import (
 )
 
 const (
-	DefaultServerMaxReceiveMessageSize = math.MaxInt32
-	DefaultServerMaxSendMessageSize    = 1024 * 1024 * 24
+	DefaultServerMaxReceiveMessageSize              = math.MaxInt32
+	DefaultServerMaxSendMessageSize                 = 1024 * 1024 * 24
+	DefaultServerKeepAliveEnforcementMinTime        = 5 * time.Second
+	DefaultServerKeepAliveMaxIdleConnectionDuration = 15 * time.Second
+	DefaultServerKeepAliveMaxConnectionAgeDuration  = 30 * time.Second
+	DefaultServerKeepAliveMaxConnectionAgeGrace     = 5 * time.Second
+	DefaultServerKeepAliveTime                      = 2*time.Minute + time.Second
+	DefaultServerKeepAliveTimeout                   = 1*time.Minute + 10*time.Second
 )
 
 func DefaultEnforcementServerOptions() grpcKeepalive.EnforcementPolicy {
 	return grpcKeepalive.EnforcementPolicy{
-		MinTime:             5 * time.Second,
+		MinTime:             DefaultServerKeepAliveEnforcementMinTime,
 		PermitWithoutStream: true,
 	}
 }
 
 func DefaultKeepaliveServerOptions() grpcKeepalive.ServerParameters {
 	return grpcKeepalive.ServerParameters{
-		MaxConnectionIdle:     15 * time.Second,
-		MaxConnectionAge:      30 * time.Second,
-		MaxConnectionAgeGrace: 5 * time.Second,
-		Time:                  5 * time.Second,
-		Timeout:               1 * time.Second,
+		MaxConnectionIdle:     DefaultServerKeepAliveMaxIdleConnectionDuration,
+		MaxConnectionAge:      DefaultServerKeepAliveMaxConnectionAgeDuration,
+		MaxConnectionAgeGrace: DefaultServerKeepAliveMaxConnectionAgeGrace,
+		Time:                  DefaultServerKeepAliveTime,
+		Timeout:               DefaultServerKeepAliveTimeout,
 	}
 }
 

@@ -57,7 +57,7 @@ func (r *resolver) Resolve(service, proto, name string) (string, error) {
 	return addr, nil
 }
 
-func newResolver(errFmt errorFormatterService) *resolver {
+func NewResolver(errFmt errorFormatterService) *resolver {
 	return &resolver{
 		e: errFmt,
 	}
