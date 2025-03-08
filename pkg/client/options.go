@@ -33,12 +33,8 @@
 package client
 
 import (
-	"context"
 	"math"
-	"net"
 	"time"
-
-	"github.com/crypto-bundle/bc-wallet-common-lib-grpc/pkg/dns"
 
 	grpcRetry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	originGRPC "google.golang.org/grpc"
@@ -82,25 +78,4 @@ func DefaultDialOptions() []originGRPC.DialOption {
 		originGRPC.WithKeepaliveParams(DefaultKeepaliveClientOptions()),
 		originGRPC.WithChainUnaryInterceptor(DefaultInterceptorsOptions()...),
 	}
-}
-
-// Dialer is a method to pass it in grpc.Dial options...
-func Dialer(_ context.Context, target string) (net.Conn, error) {
-	addr, err := dns.Resolve("grpc", "tcp", target)
-	if err != nil {
-		return nil, err
-	}
-
-	cn, err := net.Dial("tcp", addr)
-
-	return cn, err
-}
-
-func Dial(target string, opts []originGRPC.DialOption) (*originGRPC.ClientConn, error) {
-	dialOptions := opts
-	if len(dialOptions) == 0 {
-		dialOptions = DefaultDialOptions()
-	}
-
-	return originGRPC.Dial(target, dialOptions...)
 }

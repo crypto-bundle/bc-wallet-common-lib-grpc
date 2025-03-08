@@ -49,3 +49,7 @@ type errorFormatterService interface {
 	NewError(details ...string) error
 	NewErrorf(format string, args ...interface{}) error
 }
+
+type dnsResolverService interface {
+	Resolve(service, proto, name string) (string, error)
+}

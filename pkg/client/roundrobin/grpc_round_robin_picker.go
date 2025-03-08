@@ -41,14 +41,14 @@ import (
 	"google.golang.org/grpc/balancer/base"
 )
 
-// Name is the name of round_robin balancer.
-const Name = "round_robin_crypto_bundle"
+// BalancerName is the name of round_robin balancer.
+const BalancerName = "round_robin_crypto_bundle"
 
 // newBuilder creates a new roundrobin balancer builder.
 //
 //nolint:ireturn // it's ok here, like in vanilla gRPC-picker implementation
 func newBuilder() balancer.Builder {
-	return base.NewBalancerBuilder(Name, &rrPickerBuilder{}, base.Config{HealthCheck: true})
+	return base.NewBalancerBuilder(BalancerName, &rrPickerBuilder{}, base.Config{HealthCheck: true})
 }
 
 //nolint:gochecknoinits // ok. It is just copy of origin func

@@ -87,7 +87,12 @@ func (d *LazyConnection) Invoke(ctx context.Context,
 	opts ...originGRPC.CallOption,
 ) error {
 	if d.connection != nil {
-		return d.connection.Invoke(ctx, method, args, reply, opts...)
+		err := d.connection.Invoke(ctx, method, args, reply, opts...)
+		if err != nil {
+			return d.e.ErrorOnly(err)
+		}
+
+		return nil
 	}
 
 	conn, err := d.connect(ctx)
@@ -97,7 +102,12 @@ func (d *LazyConnection) Invoke(ctx context.Context,
 
 	d.connection = conn
 
-	return d.connection.Invoke(ctx, method, args, reply, opts...)
+	err = d.connection.Invoke(ctx, method, args, reply, opts...)
+	if err != nil {
+		return d.e.ErrorOnly(err)
+	}
+
+	return nil
 }
 
 func (d *LazyConnection) NewStream(ctx context.Context,
@@ -106,7 +116,12 @@ func (d *LazyConnection) NewStream(ctx context.Context,
 	opts ...originGRPC.CallOption,
 ) (originGRPC.ClientStream, error) {
 	if d.connection != nil {
-		return d.connection.NewStream(ctx, desc, method, opts...)
+		strm, err := d.connection.NewStream(ctx, desc, method, opts...)
+		if err != nil {
+			return nil, d.e.ErrorOnly(err)
+		}
+
+		return strm, nil
 	}
 
 	conn, err := d.connect(ctx)
@@ -116,7 +131,12 @@ func (d *LazyConnection) NewStream(ctx context.Context,
 
 	d.connection = conn
 
-	return d.connection.NewStream(ctx, desc, method, opts...)
+	strm, err := d.connection.NewStream(ctx, desc, method, opts...)
+	if err != nil {
+		return nil, d.e.ErrorOnly(err)
+	}
+
+	return strm, nil
 }
 
 func (d *LazyConnection) Close() {
