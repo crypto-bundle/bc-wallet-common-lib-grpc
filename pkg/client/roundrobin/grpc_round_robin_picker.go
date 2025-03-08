@@ -30,35 +30,80 @@
  *
  */
 
-package dns
+package roundrobin
 
 import (
-	"fmt"
-	"net"
+	"crypto/rand"
+	"math/big"
+	"sync/atomic"
+
+	"google.golang.org/grpc/balancer"
+	"google.golang.org/grpc/balancer/base"
 )
 
-type resolver struct {
-	e errorFormatterService
+// BalancerName is the name of round_robin balancer.
+const BalancerName = "round_robin_crypto_bundle"
+
+// newBuilder creates a new roundrobin balancer builder.
+//
+//nolint:ireturn // it's ok here, like in vanilla gRPC-picker implementation
+func newBuilder() balancer.Builder {
+	return base.NewBalancerBuilder(BalancerName, &rrPickerBuilder{}, base.Config{HealthCheck: true})
 }
 
-// Resolve service ip:port from dns srv record...
-func (r *resolver) Resolve(service, proto, name string) (string, error) {
-	cname, addrs, err := net.LookupSRV(service, proto, name)
+//nolint:gochecknoinits // ok. It is just copy of origin func
+func init() {
+	balancer.Register(newBuilder())
+}
+
+type rrPickerBuilder struct {
+}
+
+//nolint:ireturn // it's ok here, like in vanilla gRPC-picker implementation
+func (*rrPickerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
+	if len(info.ReadySCs) == 0 {
+		return base.NewErrPicker(balancer.ErrNoSubConnAvailable)
+	}
+
+	scs := make([]balancer.SubConn, 0, len(info.ReadySCs))
+	scsInfo := make([]base.SubConnInfo, 0, len(info.ReadySCs))
+
+	for sc := range info.ReadySCs {
+		scs = append(scs, sc)
+		scsInfo = append(scsInfo, info.ReadySCs[sc])
+	}
+
+	randBigInt := big.NewInt(int64(len(scs)))
+
+	next, err := rand.Int(rand.Reader, randBigInt)
 	if err != nil {
-		return "", r.e.ErrorOnly(err)
+		next = big.NewInt(0)
 	}
 
-	if len(addrs) == 0 {
-		return "", r.e.NewErrorf("SRV Lookup for %q service not found", service)
+	return &rrPicker{
+		subConns:       scs,
+		subConnsInfo:   scsInfo,
+		subsConnsCount: uint64(len(scs)),
+		// Start at a random index, as the same RR balancer rebuilds a new
+		// picker when SubConn states change, and we don't want to apply excess
+		// load to the first server in the list.
+		next: next.Uint64(),
 	}
-
-	addr := fmt.Sprintf("%s:%d", cname, addrs[0].Port)
-
-	return addr, nil
 }
 
-func NewResolver(errFmt errorFormatterService) *resolver {
-	return &resolver{
-		e: errFmt,
-	}
+type rrPicker struct {
+	subConns       []balancer.SubConn
+	subConnsInfo   []base.SubConnInfo
+	subsConnsCount uint64
+	next           uint64
+}
+
+func (p *rrPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
+	next := atomic.AddUint64(&p.next, 1)
+
+	return balancer.PickResult{
+		SubConn:  p.subConns[next%p.subsConnsCount],
+		Done:     nil,
+		Metadata: nil,
+	}, nil
 }
