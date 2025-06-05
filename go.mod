@@ -2,8 +2,6 @@ module github.com/crypto-bundle/bc-wallet-common-lib-grpc
 
 go 1.23.0
 
-toolchain go1.24.0
-
 require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.50.0
