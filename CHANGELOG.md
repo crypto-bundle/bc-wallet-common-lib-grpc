@@ -1,5 +1,11 @@
 # Change Log
 
+## [v0.0.7] - 06.06.2025
+### Changed
+* Moved net connection dialler to separate package
+### Added
+* Added unix file socket dialler
+
 ## [v0.0.6] - 27.04.2025
 ### Changed
 * Bump go X package dependencies:
