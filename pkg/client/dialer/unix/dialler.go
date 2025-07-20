@@ -126,22 +126,26 @@ func (d *socketDialler) DialCallback(ctx context.Context, _ string) (net.Conn, e
 	file, hasNext := d.next()
 
 	for file == nil && !hasNext {
-		file, hasNext = d.next()
-
 		filePath := filepath.Join(d.dirName, file.Name())
 
 		resolved, err := net.ResolveUnixAddr("unix", filePath)
 		if err != nil {
 			d.l.Error("unable to resolve unix-socket",
 				slog.String("error", err.Error()))
-			return nil, err
+
+			file, hasNext = d.next()
+
+			continue
 		}
 
 		dialConn, err := net.DialUnix("unix", nil, resolved)
 		if err != nil {
 			d.l.Error("unable to dial unix-socket",
 				slog.String("error", err.Error()))
-			return nil, err
+
+			file, hasNext = d.next()
+
+			continue
 		}
 
 		connected = true
