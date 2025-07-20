@@ -125,7 +125,7 @@ func (d *socketDialler) DialCallback(ctx context.Context, _ string) (net.Conn, e
 
 	file, hasNext := d.next()
 
-	for file == nil && !hasNext {
+	for file != nil && hasNext {
 		filePath := filepath.Join(d.dirName, file.Name())
 
 		resolved, err := net.ResolveUnixAddr("unix", filePath)
