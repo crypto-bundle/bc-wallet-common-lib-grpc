@@ -62,7 +62,7 @@ func (d *socketDialler) next() (os.DirEntry, bool) {
 	position := d.currentEntryPosition
 	d.currentEntryPosition++
 
-	if d.currentEntryPosition <= d.count {
+	if d.currentEntryPosition >= d.count {
 		err := d.prepare()
 		if err != nil {
 			return nil, false
