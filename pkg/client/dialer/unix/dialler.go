@@ -62,7 +62,7 @@ func (d *socketDialler) next() (os.DirEntry, bool) {
 	position := d.currentEntryPosition
 	d.currentEntryPosition++
 
-	if d.currentEntryPosition >= d.count {
+	if d.currentEntryPosition <= d.count {
 		err := d.prepare()
 		if err != nil {
 			return nil, false
@@ -124,8 +124,9 @@ func (d *socketDialler) DialCallback(ctx context.Context, _ string) (net.Conn, e
 	var conn *net.UnixConn = nil
 
 	file, hasNext := d.next()
+	hasNext = true //hack for first loop iteration
 
-	for file != nil && hasNext {
+	for file != nil && !hasNext {
 		filePath := filepath.Join(d.dirName, file.Name())
 
 		resolved, err := net.ResolveUnixAddr("unix", filePath)
