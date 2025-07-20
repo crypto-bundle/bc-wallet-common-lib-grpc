@@ -35,6 +35,7 @@ package unix
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
@@ -46,7 +47,8 @@ var (
 )
 
 type socketDialler struct {
-	e errorFormatterService
+	logger *slog.Logger
+	e      errorFormatterService
 
 	dirName     string
 	filePattern string
@@ -118,27 +120,45 @@ func (d *socketDialler) reset() (uint, error) {
 }
 
 func (d *socketDialler) DialCallback(ctx context.Context, _ string) (net.Conn, error) {
+	var connected = false
+	var conn *net.UnixConn = nil
+
 	file, hasNext := d.next()
-	if file == nil && !hasNext {
+
+	for file == nil && !hasNext {
+		file, hasNext = d.next()
+
+		filePath := filepath.Join(d.dirName, file.Name())
+
+		resolved, err := net.ResolveUnixAddr("unix", filePath)
+		if err != nil {
+			d.logger.Error("unable to resolve unix-socket",
+				slog.String("error", err.Error()))
+			return nil, err
+		}
+
+		dialConn, err := net.DialUnix("unix", nil, resolved)
+		if err != nil {
+			d.logger.Error("unable to dial unix-socket",
+				slog.String("error", err.Error()))
+			return nil, err
+		}
+
+		connected = true
+		conn = dialConn
+
+		break
+	}
+
+	if conn == nil || !connected {
 		return nil, ErrMissingDirEntry
-	}
-
-	filePath := filepath.Join(d.dirName, file.Name())
-
-	resolved, err := net.ResolveUnixAddr("unix", filePath)
-	if err != nil {
-		return nil, err
-	}
-
-	conn, err := net.DialUnix("unix", nil, resolved)
-	if err != nil {
-		return nil, err
 	}
 
 	return conn, nil
 }
 
-func NewUnitFileSocketDialer(errFmtSvc errorFormatterService,
+func NewUnitFileSocketDialer(logger slog.Logger,
+	errFmtSvc errorFormatterService,
 	dirName,
 	filePattern string,
 ) *socketDialler {
