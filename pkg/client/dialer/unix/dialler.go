@@ -47,8 +47,8 @@ var (
 )
 
 type socketDialler struct {
-	logger *slog.Logger
-	e      errorFormatterService
+	l *slog.Logger
+	e errorFormatterService
 
 	dirName     string
 	filePattern string
@@ -132,14 +132,14 @@ func (d *socketDialler) DialCallback(ctx context.Context, _ string) (net.Conn, e
 
 		resolved, err := net.ResolveUnixAddr("unix", filePath)
 		if err != nil {
-			d.logger.Error("unable to resolve unix-socket",
+			d.l.Error("unable to resolve unix-socket",
 				slog.String("error", err.Error()))
 			return nil, err
 		}
 
 		dialConn, err := net.DialUnix("unix", nil, resolved)
 		if err != nil {
-			d.logger.Error("unable to dial unix-socket",
+			d.l.Error("unable to dial unix-socket",
 				slog.String("error", err.Error()))
 			return nil, err
 		}
@@ -157,12 +157,13 @@ func (d *socketDialler) DialCallback(ctx context.Context, _ string) (net.Conn, e
 	return conn, nil
 }
 
-func NewUnitFileSocketDialer(logger slog.Logger,
+func NewUnitFileSocketDialer(logger *slog.Logger,
 	errFmtSvc errorFormatterService,
 	dirName,
 	filePattern string,
 ) *socketDialler {
 	return &socketDialler{
+		l:           logger,
 		e:           errFmtSvc,
 		dirName:     dirName,
 		filePattern: filePattern,
