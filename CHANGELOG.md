@@ -1,5 +1,9 @@
 # Change Log
 
+## [v0.0.8] - 21.07.2025
+### Fixed
+* Fixed bug with infinite connection via unix-socket connection 
+
 ## [v0.0.7] - 06.06.2025
 ### Changed
 * Moved net connection dialler to separate package
